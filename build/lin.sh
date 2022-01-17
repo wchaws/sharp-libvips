@@ -149,32 +149,32 @@ version_latest() {
     echo "$1 version $2 has been superseded by $VERSION_LATEST"
   fi
 }
-version_latest "zlib-ng" "$VERSION_ZLIB_NG" "115592"
-version_latest "ffi" "$VERSION_FFI" "1611"
-version_latest "glib" "$VERSION_GLIB" "10024" "unstable"
-version_latest "xml2" "$VERSION_XML2" "1783"
-version_latest "gsf" "$VERSION_GSF" "1980"
-version_latest "exif" "$VERSION_EXIF" "1607"
-version_latest "lcms2" "$VERSION_LCMS2" "9815"
+# version_latest "zlib-ng" "$VERSION_ZLIB_NG" "115592"
+# version_latest "ffi" "$VERSION_FFI" "1611"
+# version_latest "glib" "$VERSION_GLIB" "10024" "unstable"
+# version_latest "xml2" "$VERSION_XML2" "1783"
+# version_latest "gsf" "$VERSION_GSF" "1980"
+# version_latest "exif" "$VERSION_EXIF" "1607"
+# version_latest "lcms2" "$VERSION_LCMS2" "9815"
 #version_latest "mozjpeg" "$VERSION_MOZJPEG" "" # not yet in release monitoring
-version_latest "png" "$VERSION_PNG16" "1705"
-version_latest "spng" "$VERSION_SPNG" "24289"
-version_latest "webp" "$VERSION_WEBP" "1761"
-version_latest "tiff" "$VERSION_TIFF" "1738"
-version_latest "orc" "$VERSION_ORC" "2573"
+# version_latest "png" "$VERSION_PNG16" "1705"
+#version_latest "spng" "$VERSION_SPNG" "24289" # release monitoring still has 0.7.0
+# version_latest "webp" "$VERSION_WEBP" "1761"
+# version_latest "tiff" "$VERSION_TIFF" "1738"
+# version_latest "orc" "$VERSION_ORC" "2573"
 #version_latest "proxy-libintl" "$VERSION_PROXY_LIBINTL" "" # not yet in release monitoring
-version_latest "gdkpixbuf" "$VERSION_GDKPIXBUF" "9533"
-version_latest "freetype" "$VERSION_FREETYPE" "854"
-version_latest "expat" "$VERSION_EXPAT" "770"
+# version_latest "gdkpixbuf" "$VERSION_GDKPIXBUF" "9533"
+# version_latest "freetype" "$VERSION_FREETYPE" "854"
+# version_latest "expat" "$VERSION_EXPAT" "770"
 #version_latest "fontconfig" "$VERSION_FONTCONFIG" "827" # 2.13.94 fails to build on macOS
-version_latest "harfbuzz" "$VERSION_HARFBUZZ" "1299"
-version_latest "pixman" "$VERSION_PIXMAN" "3648"
-version_latest "cairo" "$VERSION_CAIRO" "247"
-version_latest "fribidi" "$VERSION_FRIBIDI" "857"
-version_latest "pango" "$VERSION_PANGO" "11783"
-version_latest "svg" "$VERSION_SVG" "5420"
-version_latest "aom" "$VERSION_AOM" "17628"
-version_latest "heif" "$VERSION_HEIF" "64439"
+# version_latest "harfbuzz" "$VERSION_HARFBUZZ" "1299"
+# version_latest "pixman" "$VERSION_PIXMAN" "3648"
+# version_latest "cairo" "$VERSION_CAIRO" "247"
+# version_latest "fribidi" "$VERSION_FRIBIDI" "857"
+# version_latest "pango" "$VERSION_PANGO" "11783"
+# version_latest "svg" "$VERSION_SVG" "5420"
+# version_latest "aom" "$VERSION_AOM" "17628"
+# version_latest "heif" "$VERSION_HEIF" "64439"
 #version_latest "cgif" "$VERSION_CGIF" "" # not yet in release monitoring
 if [ "$ALL_AT_VERSION_LATEST" = "false" ]; then exit 1; fi
 
@@ -463,6 +463,27 @@ CFLAGS="${CFLAGS} -O3" meson setup _build --default-library=static --buildtype=r
 ninja -C _build
 ninja -C _build install
 
+mkdir ${DEPS}/ImageMagick
+IMAGEMAGICK_VERSION=7.0.8-45
+$CURL -L https://github.com/ImageMagick/ImageMagick/archive/refs/tags/${IMAGEMAGICK_VERSION}.tar.gz | tar xzC ${DEPS}/ImageMagick --strip-components=1
+cd ${DEPS}/ImageMagick
+CFLAGS="${CFLAGS} -O3" CXXFLAGS="${CXXFLAGS} -O3" ./configure --host=${CHOST} --prefix=${TARGET} \
+		CPPFLAGS=-I${TARGET}/include \
+		LDFLAGS=-L${TARGET}/lib \
+		--disable-dependency-tracking \
+		--disable-shared \
+		--enable-static \
+		--prefix=${TARGET} \
+		--enable-delegate-build \
+    --without-heic \
+		--without-modules \
+		--disable-docs \
+		--without-magick-plus-plus \
+		--without-perl \
+		--without-x \
+		--disable-openmp
+make install-strip
+
 mkdir ${DEPS}/vips
 $CURL https://github.com/libvips/libvips/releases/download/v${VERSION_VIPS}/vips-${VERSION_VIPS}.tar.gz | tar xzC ${DEPS}/vips --strip-components=1
 cd ${DEPS}/vips
@@ -475,7 +496,7 @@ PKG_CONFIG="pkg-config --static" CFLAGS="${CFLAGS} -O3" CXXFLAGS="${CXXFLAGS} -O
   --host=${CHOST} --prefix=${TARGET} --enable-shared --disable-static --disable-dependency-tracking \
   --disable-debug --disable-deprecated --disable-introspection --disable-modules --without-doxygen \
   --without-analyze --without-cfitsio --without-fftw --without-libjxl --without-libopenjp2 \
-  --without-magick --without-matio --without-nifti --without-OpenEXR \
+  --with-magick --without-matio --without-nifti --without-OpenEXR \
   --without-openslide --without-pdfium --without-poppler --without-ppm --without-radiance
 # https://docs.fedoraproject.org/en-US/packaging-guidelines/#_removing_rpath
 sed -i'.bak' 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool
